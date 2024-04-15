@@ -1,11 +1,8 @@
 package work.project.beercenter.bot;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,30 +10,27 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import work.project.beercenter.model.Client;
-import work.project.beercenter.service.UserService;
-
+import work.project.beercenter.model.Clients;
+import work.project.beercenter.utils.Tools;
 
 import java.io.InputStream;
-import java.util.List;
 
+
+@Getter
 @Component
 @PropertySource("classpath:telegram.properties")
 public class ChatBot extends TelegramLongPollingBot {
 
-    private static final Logger LOGGER = LogManager.getLogger(ChatBot.class); //log4j
-    private static final Integer SEND_MESSAGES_PER_ITERATION = 1;
-    private static Integer PAGE_SEQUENCE_FOR_USERS_LIST = 0;
-    private static final String BROADCAST = "broadcast ";
-    private static final String LIST_USERS = "users";
-    private final UserService userService;
+
+    private final Tools tools;
+
     @Value("${bot.name}")
     private String botName;
     @Value("${bot.token}")
     private String botToken;
 
-    public ChatBot(UserService userService) {
-        this.userService = userService;
+    public ChatBot(Tools tools) {
+        this.tools = tools;
     }
 
     @Override
@@ -57,10 +51,10 @@ public class ChatBot extends TelegramLongPollingBot {
         final String text = update.getMessage().getText();
         final long chatId = update.getMessage().getChatId();
 
-        Client client = userService.findByChatId(chatId);
+        Clients clients = tools.getClientsService().findByChatId(chatId);
 
-        if (checkIfAdminCommand(client, text))
-            return;
+//        if (checkIfAdminCommand(user, text))
+//            return;
 
         BotContext context;
         BotState state;
@@ -68,21 +62,21 @@ public class ChatBot extends TelegramLongPollingBot {
         // H -> Ph -> Em -> Th
         // 1 -> 2! -> 3! -> 4
 
-        if (client == null) {
+        if (clients == null) {
             state = BotState.getInitialState();
 
-            client = new Client(chatId, state.ordinal());
-            userService.addUser(client);
+            clients = new Clients(chatId, state.ordinal());
+            tools.getClientsService().addUser(clients);
 
-            context = BotContext.of(this, client, text);
+            context = BotContext.of(tools, this, clients, text);
             state.enter(context);
 
-            LOGGER.info("New client registered: " + chatId);
+//            LOGGER.info("New user registered: " + chatId);
         } else {
-            context = BotContext.of(this, client, text);
-            state = BotState.byId(client.getStateId());
+            context = BotContext.of(tools, this, clients, text);
+            state = BotState.byId(clients.getStateId());
 
-            LOGGER.info("Update received for client in state: " + state);
+//            LOGGER.info("Update received for user in state: " + state);
         }
 
         state.handleInput(context);
@@ -93,34 +87,14 @@ public class ChatBot extends TelegramLongPollingBot {
             state.enter(context);
         } while (!state.isInputNeeded());
 
-        client.setStateId(state.ordinal());
-        userService.updateUser(client);
+        clients.setStateId(state.ordinal());
+        tools.getClientsService().updateUser(clients);
     }
 
-    private boolean checkIfAdminCommand(Client client, String text) {
-        if (client == null || !client.getAdmin())
-            return false;
-
-        if (text.startsWith(BROADCAST)) {
-            LOGGER.info("Admin command received: " + BROADCAST);
-
-            text = text.substring(BROADCAST.length());
-            broadcast(text);
-
-            return true;
-        } else if (text.equals(LIST_USERS)) {
-            LOGGER.info("Admin command received: " + LIST_USERS);
-
-            listUsers(client);
-            return true;
-        }
-
-        return false;
-    }
-
-    private void sendMessage(long chatId, String text) {
+    public void sendMessage(Clients clients, String text) {
+        String chatId = String.valueOf(clients.getChatId());
         SendMessage message = new SendMessage();
-        message.setChatId(Long.toString(chatId));
+        message.setChatId(chatId);
         message.setText(text);
         try {
             execute(message);
@@ -129,47 +103,17 @@ public class ChatBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendPhoto(long chatId) {
+    public void sendPhoto(Clients clients, String pathOfPhoto) {
         InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("test.png");
+                .getResourceAsStream(pathOfPhoto);
 
         SendPhoto message = new SendPhoto();
-        message.setChatId(Long.toString(chatId));
-        message.setPhoto(new InputFile(is, "test"));
+        message.setChatId(Long.toString(clients.getChatId()));
+        message.setPhoto(new InputFile(is, pathOfPhoto));
         try {
             execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void listUsers(Client admin) {
-        StringBuilder sb = new StringBuilder("All clients list:\r\n");
-        if((userService.countUsers() / SEND_MESSAGES_PER_ITERATION) <= PAGE_SEQUENCE_FOR_USERS_LIST)
-            PAGE_SEQUENCE_FOR_USERS_LIST = 0;
-
-        List<Client> clients = userService.findAllUsers(PageRequest.of(PAGE_SEQUENCE_FOR_USERS_LIST++,
-                SEND_MESSAGES_PER_ITERATION, Sort.Direction.DESC, "id"));
-
-        clients.forEach(client ->
-                sb.append(client.getClientId())
-                        .append(' ')
-                        .append(client.getPhone())
-                        .append(' ')
-                        .append(client.getEmail())
-                        .append("\r\n")
-        );
-
-        sendPhoto(admin.getChatId());
-        sendMessage(admin.getChatId(), sb.toString());
-    }
-
-
-    private void broadcast(String text) {
-        for (int page = 0; page < userService.countUsers() / SEND_MESSAGES_PER_ITERATION; page++) {
-            List<Client> clients = userService.findAllUsers(PageRequest.of(page,
-                    SEND_MESSAGES_PER_ITERATION, Sort.Direction.DESC, "id"));
-            clients.forEach(user -> sendMessage(user.getChatId(), text));
         }
     }
 }

@@ -6,17 +6,14 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import work.project.beercenter.model.Client;
-import work.project.beercenter.service.UserService;
-
-
-import java.util.List;
+import work.project.beercenter.model.Clients;
+import work.project.beercenter.service.ClientsService;
 
 @Component
 @PropertySource("classpath:telegram.properties")
 public class NotificationService {
 
-    private final UserService userService;
+    private final ClientsService clientsService;
     private final JavaMailSender emailSender;
 
     @Value("${bot.email.subject}")
@@ -28,32 +25,28 @@ public class NotificationService {
     @Value("${bot.email.to}")
     private String emailTo;
 
-    public NotificationService(UserService userService, JavaMailSender emailSender) {
-        this.userService = userService;
+    public NotificationService(ClientsService clientsService, JavaMailSender emailSender) {
+        this.clientsService = clientsService;
         this.emailSender = emailSender;
     }
 
-    @Scheduled(fixedRate = 100000)
-    public void sendNewApplications() {
-        List<Client> clients = userService.findNewUsers();
-        if (clients.size() == 0)
-            return;
-
+    public void sendComplaintsAndWishesToAdminMail(Clients clients, String theReasonForPetition) {
         StringBuilder sb = new StringBuilder();
-
-        clients.forEach(user ->
-            sb.append("Phone: ")
-                    .append(user.getPhone())
-                    .append("\r\n")
-                    .append("Email: ")
-                    .append(user.getEmail())
-                    .append("\r\n\r\n")
-        );
+        sb.append("Full name: ")
+                .append(clients.getFullName())
+                .append("\r\n")
+                .append("Phone: ")
+                .append(clients.getPhone())
+                .append("\r\n")
+                .append("Email: ")
+                .append(clients.getEmail())
+                .append("\r\n")
+                .append("wanna to say about: " + "\n")
+                .append(theReasonForPetition)
+                .append("\r\n\r\n");
 
         sendEmail(sb.toString());
     }
-
-    // c -> smtp ----- smtp -> pop3/imap <--- c
 
     private void sendEmail(String text) {
         SimpleMailMessage message = new SimpleMailMessage();

@@ -1,32 +1,25 @@
 package work.project.beercenter.bot;
 
 
-import work.project.beercenter.model.Client;
-
+import lombok.Getter;
+import work.project.beercenter.model.Clients;
+import work.project.beercenter.utils.Tools;
+@Getter
 public class BotContext {
+    private final Tools tools;
     private final ChatBot bot;
-    private final Client client;
+    private final Clients clients;
     private final String input;
 
-    public static BotContext of(ChatBot bot, Client client, String text) {
-        return new BotContext(bot, client, text);
+    public static BotContext of(Tools tools, ChatBot bot, Clients clients, String text) {
+        return new BotContext(tools, bot, clients, text);
     }
 
-    private BotContext(ChatBot bot, Client client, String input) {
+    private BotContext(Tools tools, ChatBot bot, Clients clients, String input) {
+        this.tools = tools;
         this.bot = bot;
-        this.client = client;
+        this.clients = clients;
         this.input = input;
     }
 
-    public ChatBot getBot() {
-        return bot;
-    }
-
-    public Client getUser() {
-        return client;
-    }
-
-    public String getInput() {
-        return input;
-    }
 }

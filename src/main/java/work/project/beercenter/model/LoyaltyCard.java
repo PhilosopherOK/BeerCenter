@@ -23,11 +23,12 @@ public class LoyaltyCard {
 
     @OneToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "client_id", referencedColumnName = "client_id")
-    private Client client;
+    private Clients clients;
 
-    public LoyaltyCard(Integer bonusBalance, Long numberOfCard, String pathOfBarcode) {
+    public LoyaltyCard(Integer bonusBalance, Long numberOfCard, String pathOfBarcode, Clients clients) {
         this.bonusBalance = bonusBalance;
         this.numberOfCard = numberOfCard;
         this.pathOfBarcode = pathOfBarcode;
+        this.clients = clients;
     }
 }
