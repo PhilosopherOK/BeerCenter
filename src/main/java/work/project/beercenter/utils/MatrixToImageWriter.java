@@ -3,6 +3,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+
 import com.google.zxing.common.BitMatrix;
 
 public class MatrixToImageWriter {
@@ -26,8 +29,21 @@ public class MatrixToImageWriter {
 
     public static void writeToFile(BitMatrix matrix, String format, File file) throws IOException {
         BufferedImage image = toBufferedImage(matrix);
-        if (!ImageIO.write(image, format, file)) {
-            throw new IOException("Could not write an image of format " + format + " to " + file);
+
+        ImageWriter writer = null;
+        try {
+            writer = ImageIO.getImageWritersByFormatName(format).next();
+            ImageOutputStream ios = ImageIO.createImageOutputStream(file);
+            writer.setOutput(ios);
+            writer.write(image);
+        } finally {
+            if (writer != null) {
+                writer.dispose();
+            }
         }
+//        if (!ImageIO.write(image, format, file)) {
+//            throw new IOException("Could not write an image of format " + format + " to " + file);
+//        }
+
     }
 }

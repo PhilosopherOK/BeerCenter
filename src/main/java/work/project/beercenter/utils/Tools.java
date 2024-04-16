@@ -49,13 +49,13 @@ public class Tools {
     public String createBarCodeAndGetPath(Long cardNumber) {
         String barcodeText = cardNumber.toString();
         String filePath = "barcodes/barcode" + cardNumber + ".png";
+        String neededPath = "src/main/resources/";
         int width = 300;
         int height = 100;
 
         try {
             BitMatrix bitMatrix = new Code128Writer().encode(barcodeText, BarcodeFormat.CODE_128, width, height, null);
-
-            File outputFile = new File(filePath);
+            File outputFile = new File(neededPath + filePath);
             MatrixToImageWriter.writeToFile(bitMatrix, "PNG", outputFile);
         } catch (IOException e) {
             e.printStackTrace();

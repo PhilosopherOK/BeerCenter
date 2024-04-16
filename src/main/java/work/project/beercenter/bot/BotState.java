@@ -42,6 +42,15 @@ public enum BotState {
                 next = EnterPhone;
                 clients.setFullName(context.getInput());
             }
+            System.out.println(clients.getLoyaltyCard());
+            if (clients.getLoyaltyCard() == null) {
+                System.out.println("we starting create png");
+                Long newCardNumber = context.getTools().getNewCardNumber();
+                String getPathBarCode = context.getTools().createBarCodeAndGetPath(newCardNumber);
+                LoyaltyCard loyaltyCard = new LoyaltyCard(0, newCardNumber,
+                        getPathBarCode, context.getClients());
+                context.getTools().getLoyaltyCardService().save(loyaltyCard);
+            }
         }
 
         @Override
@@ -62,7 +71,7 @@ public enum BotState {
         public void handleInput(BotContext context) {
             String number = context.getInput();
             Clients clients = context.getClients();
-            if (!number.equals("") && number.length() == 11) {
+            if (!number.equals("") && number.length() == 12) {
                 try {
                     Long correctNumber = Long.parseLong(number);
                     next = CheckForNumberValid;
