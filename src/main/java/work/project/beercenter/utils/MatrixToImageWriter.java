@@ -12,9 +12,6 @@ public class MatrixToImageWriter {
     private static final int BLACK = 0xFF000000;
     private static final int WHITE = 0xFFFFFFFF;
 
-    private MatrixToImageWriter() {
-    }
-
     public static BufferedImage toBufferedImage(BitMatrix matrix) {
         int width = matrix.getWidth();
         int height = matrix.getHeight();
@@ -26,24 +23,39 @@ public class MatrixToImageWriter {
         }
         return image;
     }
+//    public static void writeToFile(BitMatrix matrix, String format, File file) throws IOException {
+//        BufferedImage image = toBufferedImage(matrix);
+//
+//        ImageWriter writer = ImageIO.getImageWritersByFormatName(format).next();
+//        if (writer == null) {
+//            throw new IllegalStateException("No writer found for format " + format);
+//        }
+//
+//        try (ImageOutputStream ios = ImageIO.createImageOutputStream(file)) {
+//            writer.setOutput(ios);
+//            writer.write(image);
+//        } finally {
+//            writer.dispose();
+//        }
+//    }
 
     public static void writeToFile(BitMatrix matrix, String format, File file) throws IOException {
         BufferedImage image = toBufferedImage(matrix);
 
         ImageWriter writer = null;
+        ImageOutputStream ios = null;
         try {
             writer = ImageIO.getImageWritersByFormatName(format).next();
-            ImageOutputStream ios = ImageIO.createImageOutputStream(file);
+            ios = ImageIO.createImageOutputStream(file);
             writer.setOutput(ios);
             writer.write(image);
         } finally {
             if (writer != null) {
                 writer.dispose();
             }
+            if (ios != null) {
+                ios.close();
+            }
         }
-//        if (!ImageIO.write(image, format, file)) {
-//            throw new IOException("Could not write an image of format " + format + " to " + file);
-//        }
-
     }
 }

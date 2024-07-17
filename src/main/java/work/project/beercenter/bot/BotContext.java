@@ -2,24 +2,26 @@ package work.project.beercenter.bot;
 
 
 import lombok.Getter;
-import work.project.beercenter.model.Clients;
+import lombok.RequiredArgsConstructor;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
+import work.project.beercenter.model.Client;
 import work.project.beercenter.utils.Tools;
+
+import java.util.List;
+
 @Getter
+@RequiredArgsConstructor
 public class BotContext {
     private final Tools tools;
     private final ChatBot bot;
-    private final Clients clients;
-    private final String input;
-
-    public static BotContext of(Tools tools, ChatBot bot, Clients clients, String text) {
-        return new BotContext(tools, bot, clients, text);
+    private final Client client;
+    private final String text;
+    private final List<PhotoSize> photoSizeList;
+    public static BotContext of(Tools tools, ChatBot bot, Client client, String text) {
+        return new BotContext(tools, bot, client, text, null);
     }
 
-    private BotContext(Tools tools, ChatBot bot, Clients clients, String input) {
-        this.tools = tools;
-        this.bot = bot;
-        this.clients = clients;
-        this.input = input;
+    public static BotContext of(Tools tools, ChatBot bot, Client client, String text, List<PhotoSize> photoSizeList) {
+        return new BotContext(tools, bot, client, text, photoSizeList);
     }
-
 }

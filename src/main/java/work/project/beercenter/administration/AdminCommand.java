@@ -1,17 +1,11 @@
 package work.project.beercenter.administration;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import work.project.beercenter.bot.ChatBot;
-import work.project.beercenter.model.Clients;
-import work.project.beercenter.utils.Tools;
 
-import java.util.List;
 @Data
 @Component
 public class AdminCommand {
@@ -26,7 +20,7 @@ public class AdminCommand {
 //        this.tools = tools;
 //    }
 //
-//    public boolean checkIfAdminCommand(Clients clients, String text) {
+//    public boolean checkIfAdminCommand(Client clients, String text) {
 //        if (clients == null || !clients.getAdmin())
 //            return false;
 //
@@ -46,12 +40,12 @@ public class AdminCommand {
 //
 //        return false;
 //    }
-//    private void listUsers(Clients admin) {
+//    private void listUsers(Client admin) {
 //        StringBuilder sb = new StringBuilder("All clients list:\r\n");
 //        if((tools.getClientsService().countUsers() / SEND_MESSAGES_PER_ITERATION) <= PAGE_SEQUENCE_FOR_USERS_LIST)
 //            PAGE_SEQUENCE_FOR_USERS_LIST = 0;
 //
-//        List<Clients> clients = tools.getClientsService().findAllUsers(PageRequest.of(PAGE_SEQUENCE_FOR_USERS_LIST++,
+//        List<Client> clients = tools.getClientsService().findAllUsers(PageRequest.of(PAGE_SEQUENCE_FOR_USERS_LIST++,
 //                SEND_MESSAGES_PER_ITERATION, Sort.Direction.DESC, "id"));
 //
 //        clients.forEach(client ->
@@ -70,7 +64,7 @@ public class AdminCommand {
 //
 //    private void broadcast(String text) {
 //        for (int page = 0; page < tools.getClientsService().countUsers() / SEND_MESSAGES_PER_ITERATION; page++) {
-//            List<Clients> clients = tools.getClientsService().findAllUsers(PageRequest.of(page,
+//            List<Client> clients = tools.getClientsService().findAllUsers(PageRequest.of(page,
 //                    SEND_MESSAGES_PER_ITERATION, Sort.Direction.DESC, "id"));
 //            clients.forEach(clients1 -> tools.getWorkingWithBot().sendMessage(clients1, text));
 //        }

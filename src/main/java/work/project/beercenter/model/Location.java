@@ -9,7 +9,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @Entity
-public class Locations {
+public class Location {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "locations_id")
@@ -18,18 +18,19 @@ public class Locations {
     @Column(name = "store_address")
     private String storeAddress;
 
+    @Column(name = "link_to_google_maps")
+    private String linkToGoogleMaps;
+
     private String schedule;
 
-    @Temporal(value = TemporalType.DATE)
-    @Column(name = "opening_date")
-    private Date openingDate;
+//    @Temporal(value = TemporalType.DATE)
+//    @Column(name = "opening_date")
+//    private Date openingDate;
+//
+//    private Boolean active;
 
-    private Boolean active;
-
-    public Locations(String storeAddress, String schedule, Date openingDate, Boolean active) {
+    public Location(String storeAddress, String schedule) {
         this.storeAddress = storeAddress;
         this.schedule = schedule;
-        this.openingDate = openingDate;
-        this.active = active;
     }
 }

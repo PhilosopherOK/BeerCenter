@@ -1,21 +1,27 @@
 package work.project.beercenter.bot;
 
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import work.project.beercenter.mail.NotificationService;
-import work.project.beercenter.model.Clients;
-import work.project.beercenter.model.LoyaltyCard;
+import work.project.beercenter.model.*;
+import work.project.beercenter.utils.keyboards.*;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+
 
 public enum BotState {
 
     Start {
         @Override
         public void enter(BotContext context) {
-            Clients clients = context.getClients();
-            context.getBot().sendPhoto(clients, "logotypes/main1.jpeg");
-            context.getBot().sendMessage(clients, "Вітаємо вас у Beer Center !");
+            Client client = context.getClient();
+            File logotype = new File("src/main/resources/logotypes/main1.jpeg");
+            context.getBot().sendPhoto(client, logotype.getAbsolutePath());
+            context.getBot().sendMessage(client, "Вітаємо вас у Beer Center !");
         }
 
         @Override
@@ -29,27 +35,22 @@ public enum BotState {
 
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(), "Будь ласка введіть ваше ПІБ:");
+            context.getBot().sendMessage(context.getClient(), "Будь ласка введіть ваше ПІБ:");
         }
 
         @Override
         public void handleInput(BotContext context) {
-            Clients clients = context.getClients();
-            if (context.getInput().equals("")) {
-                next = EnterFullName;
-                context.getBot().sendMessage(clients, "Будь ласка введіть ваше ПІБ:");
+            Client client = context.getClient();
+            if (client.getFullName() != null && context.getText().equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
             } else {
-                next = EnterPhone;
-                clients.setFullName(context.getInput());
-            }
-            System.out.println(clients.getLoyaltyCard());
-            if (clients.getLoyaltyCard() == null) {
-                System.out.println("we starting create png");
-                Long newCardNumber = context.getTools().getNewCardNumber();
-                String getPathBarCode = context.getTools().createBarCodeAndGetPath(newCardNumber);
-                LoyaltyCard loyaltyCard = new LoyaltyCard(0, newCardNumber,
-                        getPathBarCode, context.getClients());
-                context.getTools().getLoyaltyCardService().save(loyaltyCard);
+                if (context.getText() == null || context.getText().isBlank()) {
+                    next = EnterFullName;
+                    context.getBot().sendMessage(client, "Будь ласка введіть ваше ПІБ:");
+                } else {
+                    next = EnterPhone;
+                    client.setFullName(context.getText());
+                }
             }
         }
 
@@ -63,30 +64,53 @@ public enum BotState {
 
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
+            context.getBot().sendMessage(context.getClient(),
                     "Будь ласка введіть коректний номер телефону починаючи з 380(вам надійде смс з кодом підтвердження):");
         }
 
         @Override
         public void handleInput(BotContext context) {
-            String number = context.getInput();
-            Clients clients = context.getClients();
-            if (!number.equals("") && number.length() == 12) {
-                try {
-                    Long correctNumber = Long.parseLong(number);
-                    next = CheckForNumberValid;
-                    context.getBot().sendMessage(clients, "номер телефону коректний");
-                    context.getTools().getPhoneValidator().sendRandomCodeFromNumber(clients, correctNumber);
-                    clients.setPhone(context.getInput());
-                } catch (Exception e) {
-                    next = EnterPhone;
-                    context.getBot().sendMessage(context.getClients(), "номер телефону некоректний");
-                }
+            Client client = context.getClient();
+            if (client.getPhone() != null && context.getText().equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
             } else {
-                next = EnterPhone;
-                context.getBot().sendMessage(context.getClients(), "номер телефону некоректний");
+                String number = context.getText();
+                if (!(number == null) && !number.isBlank() && number.length() == 12) {
+                    try {
+                        Long correctNumber = Long.parseLong(number);
+                        context.getBot().sendMessage(client, "номер телефону коректний");
+                        client.setPhone(number);
+                        next = EnterEmail;
+                    } catch (Exception e) {
+                        next = EnterPhone;
+                        context.getBot().sendMessage(context.getClient(), "номер телефону некоректний");
+                    }
+                } else {
+                    next = EnterPhone;
+                    context.getBot().sendMessage(context.getClient(), "номер телефону некоректний");
+                }
             }
         }
+//        @Override
+//        public void handleInput(BotContext context) {
+//            String number = context.getInput();
+//            Client clients = context.getClient();
+//            if (!number.equals("") && number.length() == 12) {
+//                try {
+//                    Long correctNumber = Long.parseLong(number);
+//                    next = CheckForNumberValid;
+//                    context.getBot().sendMessage(clients, "номер телефону коректний");
+//                    context.getTools().getPhoneValidator().sendRandomCodeFromNumber(clients, correctNumber);
+//                    clients.setPhone(context.getInput());
+//                } catch (Exception e) {
+//                    next = EnterPhone;
+//                    context.getBot().sendMessage(context.getClient(), "номер телефону некоректний");
+//                }
+//            } else {
+//                next = EnterPhone;
+//                context.getBot().sendMessage(context.getClient(), "номер телефону некоректний");
+//            }
+//        }
 
         @Override
         public BotState nextState() {
@@ -99,19 +123,19 @@ public enum BotState {
 
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
+            context.getBot().sendMessage(context.getClient(),
                     "Будь ласка введіть код з смс:");
         }
 
         @Override
         public void handleInput(BotContext context) {
-            if (context.getTools().getPhoneValidator().numberIsValid(context.getClients(), context.getInput())) {
-                context.getBot().sendMessage(context.getClients(), "номер підтвердженно");
+            if (context.getTools().getPhoneValidator().numberIsValid(context.getClient(), context.getText())) {
+                context.getBot().sendMessage(context.getClient(), "номер підтвердженно");
                 next = EnterEmail;
             } else {
-                context.getBot().sendMessage(context.getClients(), "номер не підтвердженно");
+                context.getBot().sendMessage(context.getClient(), "номер не підтвердженно");
                 next = EnterPhone;
-                context.getClients().setPhone("данні відсутні");
+                context.getClient().setPhone("данні відсутні");
 
             }
         }
@@ -127,21 +151,24 @@ public enum BotState {
 
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
+            context.getBot().sendMessage(context.getClient(),
                     "Будь ласка введіть коректну електронну пошту:");
         }
 
         @Override
         public void handleInput(BotContext context) {
-            String email = context.getInput();
-
-            if (Utils.isValidEmailAddress(email)) {
-                context.getClients().setEmail(context.getInput());
-                next = EnterDateOfBirthday;
+            if (context.getClient().getEmail() != null && context.getText().equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
             } else {
-                context.getBot().sendMessage(context.getClients(),
-                        "Некоректно введена пошта!");
-                next = EnterEmail;
+                String email = context.getText();
+                if (Utils.isValidEmailAddress(email)) {
+                    context.getClient().setEmail(context.getText());
+                    next = EnterDateOfBirthday;
+                } else {
+                    context.getBot().sendMessage(context.getClient(),
+                            "Некоректно введена пошта!");
+                    next = EnterEmail;
+                }
             }
         }
 
@@ -155,21 +182,25 @@ public enum BotState {
 
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
+            context.getBot().sendMessage(context.getClient(),
                     "Будь ласка введіть дату народження у форматі (гггг-мм-дд):");
         }
 
         @Override
         public void handleInput(BotContext context) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            try {
-                Date date = sdf.parse(context.getInput());
-                next = EnterAddress;
-                context.getClients().setDateOfBirthday(date);
-            } catch (Exception e) {
-                context.getBot().sendMessage(context.getClients(),
-                        "Некоректний формат дати!");
-                next = EnterDateOfBirthday;
+            if (context.getClient().getDateOfBirthday() != null && context.getText().equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                try {
+                    Date date = sdf.parse(context.getText());
+                    next = EnterAddress;
+                    context.getClient().setDateOfBirthday(date);
+                } catch (Exception e) {
+                    context.getBot().sendMessage(context.getClient(),
+                            "Некоректний формат дати!");
+                    next = EnterDateOfBirthday;
+                }
             }
         }
 
@@ -179,27 +210,34 @@ public enum BotState {
         }
     },
     EnterAddress {
+        private BotState next;
+
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(), "Будь ласка введіть вашу адресу:");
+            context.getBot().sendMessage(context.getClient(), "Будь ласка введіть вашу адресу:");
         }
 
         @Override
         public void handleInput(BotContext context) {
-            context.getClients().setAddress(context.getInput().equals("") ? "данні відсутні" : context.getInput());
-            Clients clients = context.getClients();
-            if (clients.getLoyaltyCard() == null) {
-                Long newCardNumber = context.getTools().getNewCardNumber();
-                String getPathBarCode = context.getTools().createBarCodeAndGetPath(newCardNumber);
-                LoyaltyCard loyaltyCard = new LoyaltyCard(0, newCardNumber,
-                        getPathBarCode, context.getClients());
-                context.getTools().getLoyaltyCardService().save(loyaltyCard);
+            if (context.getClient().getAddress() != null && context.getText().equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                context.getClient().setAddress(context.getText().equals("") ? "данні відсутні" : context.getText());
+                Client client = context.getClient();
+                if (client.getLoyaltyCard() == null) {
+                    Long newCardNumber = 4444000 + client.getClientId();
+                    String getPathBarCode = context.getTools().createBarCodeAndGetPath(newCardNumber);
+                    LoyaltyCard loyaltyCard = new LoyaltyCard(0, newCardNumber,
+                            getPathBarCode, context.getClient());
+                    context.getTools().getLoyaltyCardService().save(loyaltyCard);
+                }
+                next = MyProfile;
             }
         }
 
         @Override
         public BotState nextState() {
-            return MyProfile;
+            return next;
         }
     },
     ChooseAnAction {
@@ -207,32 +245,31 @@ public enum BotState {
 
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
-                    "Будь ласка оберіть необхідну операцію з клавіатури операцій:");
+            context.getBot().sendMessage(context.getClient(),
+                    "Будь ласка оберіть необхідну операцію з клавіатури операцій:", KeyboardChooseAnAction.GET_KEYBOARD);
         }
 
         @Override
         public void handleInput(BotContext context) {
-            String command = context.getInput();
-            switch (command) {
-                case "/myProfile":
-                    next = MyProfile;
-                    break;
-                case "/myCard":
-                    next = MyCard;
-                    break;
-                case "/myBalance":
-                    next = MyBalance;
-                    break;
-                case "/updateMyProfile":
-                    next = UpdateMyProfile;
-                    break;
-                case "/myActions":
-                    next = MyActions;
-                    break;
-                case "/complaintsAndWishes":
-                    next = ComplaintsAndWishes;
-                    break;
+            String command = context.getText();
+            if (command.equals(Buttons.MY_PROFILE.getValue())) {
+                next = MyProfile;
+            } else if (command.equals(Buttons.MY_CARD.getValue())) {
+                next = MyCard;
+            } else if (command.equals(Buttons.MY_BALANCE.getValue())) {
+                next = MyBalance;
+            } else if (command.equals(Buttons.UPDATE_MY_PROFILE.getValue())) {
+                next = UpdateMyProfile;
+            } else if (command.equals(Buttons.MY_ACTIONS.getValue())) {
+                next = Actions;
+            } else if (command.equals(Buttons.COMPLAINTS_AND_WISHES.getValue())) {
+                next = ComplaintsAndWishes;
+            } else if (command.equals(Buttons.LOCATIONS.getValue())) {
+                next = Locations;
+            } else if (command.equals(Buttons.MY_ORDERS.getValue())) {
+                next = MyOrders;
+            } else {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
             }
         }
 
@@ -243,59 +280,88 @@ public enum BotState {
     },
 
     MyProfile {
+        private BotState next;
+
         @Override
-        public void enter(BotContext context) {
-            Clients clients = context.getClients();
-            context.getBot().sendMessage(context.getClients(),
-                    "🤩" + "\uD83E\uDD29 Your full name is: " + clients.getFullName() + "\n" +
-                            "📱" + "\uD83D\uDCF1 Your phone is: " + clients.getPhone() + "\n" +
-                            "📧" + "\uD83D\uDCE7 Your email is: " + clients.getEmail() + "\n" +
-                            "🎂" + "\uD83C\uDF82 Your dateOfBirthday is: " + clients.getDateOfBirthday() + "\n" +
-                            "🌃" + "\uD83C\uDF03 Your address is: " + clients.getAddress());
+        public boolean isInputNeeded() {
+            return false;
         }
 
         @Override
+        public void enter(BotContext context) {
+            Client client = context.getClient();
+            context.getBot().sendMessage(context.getClient(),
+                    "\uD83C\uDFAD" + " Your full name is: " + client.getFullName() + "\n" +
+                            "☎" + " Your phone is: " + client.getPhone() + "\n" +
+                            "\uD83D\uDCE7" + " Your email is: " + client.getEmail() + "\n" +
+                            "\uD83C\uDF89" + " Your dateOfBirthday is: " + client.getDateOfBirthday() + "\n" +
+                            "\uD83C\uDFE1" + " Your address is: " + client.getAddress());
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+        }
+
+        @Override
+
         public BotState nextState() {
-            return ChooseAnAction;
+            return next;
         }
     },
 
     MyCard {
+        private BotState next;
+
+        @Override
+        public boolean isInputNeeded() {
+            return false;
+        }
+
         @Override
         public void enter(BotContext context) {
             //send photo barcode
-            Clients clients = context.getClients();
-            String pathOfBarcode = clients.getLoyaltyCard().getPathOfBarcode();
-            context.getBot().sendPhoto(clients, pathOfBarcode);
-            context.getBot().sendMessage(clients,
-                    "ви найдивовіжніша людина, а ось ваш номер бонусної карти :" + "\n" +
-                            "💳" + "\uD83D\uDCB3 " + clients.getLoyaltyCard().getNumberOfCard());
+            Client client = context.getClient();
+            String pathOfBarcode = client.getLoyaltyCard().getPathOfBarcode();
+            context.getBot().sendPhoto(client, pathOfBarcode);
+            context.getBot().sendMessage(client, "\uD83D\uDCB3" + client.getLoyaltyCard().getNumberOfCard());
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
         }
 
         @Override
         public BotState nextState() {
-            return ChooseAnAction;
+            return next;
         }
     },
 
     MyBalance {
+        private BotState next;
+
+        @Override
+        public boolean isInputNeeded() {
+            return false;
+        }
+
         @Override
         public void enter(BotContext context) {
-            Clients clients = context.getClients();
-            context.getBot().sendMessage(clients,
-                    "\uD83E\uDD11 ваш бонусний рахунок становить: " + clients.getLoyaltyCard().getBonusBalance());
+            Client client = context.getClient();
+            context.getBot().sendMessage(client,
+                    "\uD83D\uDCB8 " + "Ваш бонусний рахунок становить: " + client.getLoyaltyCard().getBonusBalance());
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
         }
 
         @Override
         public BotState nextState() {
-            return ChooseAnAction;
+            return next;
         }
     },
 
     UpdateMyProfile {
         @Override
+        public boolean isInputNeeded() {
+            return false;
+        }
+
+        @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(), "Якщо бажаете змінити дані то будь ласта дайте відповідь на декілька питань:");
+            context.getBot().sendMessage(context.getClient(), "Якщо бажаете змінити дані то будь ласка," +
+                    " дайте відповідь на декілька питань або натиснiть назад:", KeyboardBack.GET_KEYBOARD);
         }
 
         @Override
@@ -304,42 +370,70 @@ public enum BotState {
         }
     },
 
-    MyActions {
+    Actions {
+        private BotState next;
+        private boolean inputNeeded = false;
+
+        @Override
+        public boolean isInputNeeded() {
+            return inputNeeded;
+        }
+
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(), "Ваші акції:" + "\n" +
-                    context.getTools().getActionsService().getActions());
+            List<Action> actions = context.getTools().getActionsService().getAction();
+            if (actions.size() == 0) {
+                context.getBot().sendMessage(context.getClient(), "You don't have an actions");
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                Action action = actions.get(0);
+                context.getBot().sendPhoto(context.getClient(), action.getPathOfPhoto());
+                context.getBot().sendMessage(context.getClient(), "Your actions:" + "\n" + action);
+                next = ActionsIterator;
+            }
         }
 
         @Override
         public BotState nextState() {
-            return ActionsIterator;
+            return next;
         }
     },
+
     ActionsIterator {
         private BotState next;
 
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
-                    "Оберіть наступний крок з клавіатури команд:");
+            if (context.getClient().getAdmin()) {
+                context.getBot().sendMessage(context.getClient(),
+                        "Оберіть наступний крок з клавіатури команд:", KeyboardAdminActionsIterator.GET_KEYBOARD);
+            } else {
+                context.getBot().sendMessage(context.getClient(),
+                        "Оберіть наступний крок з клавіатури команд:", KeyboardActionsIterator.GET_KEYBOARD);
+            }
         }
 
         @Override
         public void handleInput(BotContext context) {
-            String nextStep = context.getInput();
-            switch (nextStep) {
-                case "/next":
-                    next = NextAction;
-                    break;
-                case "/previous":
-                    next = PreviousAction;
-                case "/back":
-                    next = ChooseAnAction;
-                    break;
-                default:
-                    next = ChooseAnAction;
-                    break;
+            String nextStep = context.getText();
+            if (nextStep.equals(Buttons.NEXT_ACTIONS.getValue())) {
+                next = NextAction;
+            } else if (nextStep.equals(Buttons.PREVIOUS_ACTIONS.getValue())) {
+                next = PreviousAction;
+            } else if (nextStep.equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else if (nextStep.equals(Buttons.DELETE.getValue())) {
+                List<Action> actions = context.getTools().getActionsService().getAction();
+                if (actions.size() == 0) {
+                    context.getBot().sendMessage(context.getClient(), "You don't have an actions");
+                    next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+                } else {
+                    context.getTools().getActionsService().deleteById(actions.get(0).getActionsId());
+                    context.getBot().sendMessage(context.getClient(), "You delete the action");
+                }
+                next = ActionsIterator;
+            } else {
+                next = ActionsIterator;
             }
         }
 
@@ -349,57 +443,375 @@ public enum BotState {
         }
     },
     NextAction {
+        private BotState next;
+
+
+        @Override
+        public boolean isInputNeeded() {
+            return false;
+        }
+
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
-                    context.getTools().getActionsService().getNextActions().toString());
+            List<Action> actions = context.getTools().getActionsService().getNextActions();
+            if (actions.size() == 0) {
+                context.getBot().sendMessage(context.getClient(), "You don't have an actions");
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                Action action = actions.get(0);
+                context.getBot().sendPhoto(context.getClient(), action.getPathOfPhoto());
+                context.getBot().sendMessage(context.getClient(), "Your action:" + "\n" + action);
+                next = ActionsIterator;
+            }
         }
 
         @Override
         public BotState nextState() {
-            return ActionsIterator;
+            return next;
         }
     },
     PreviousAction {
+        private BotState next;
+
+        @Override
+        public boolean isInputNeeded() {
+            return false;
+        }
+
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
-                    context.getTools().getActionsService().getPreviousActions().toString());
+            List<Action> actions = context.getTools().getActionsService().getPreviousActions();
+            if (actions.size() == 0) {
+                context.getBot().sendMessage(context.getClient(), "You don't have an actions");
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                Action action = actions.get(0);
+                context.getBot().sendPhoto(context.getClient(), action.getPathOfPhoto());
+                context.getBot().sendMessage(context.getClient(), "Your action:" + "\n" + action);
+                next = ActionsIterator;
+            }
         }
 
         @Override
         public BotState nextState() {
-            return ActionsIterator;
+            return next;
         }
     },
 
     ComplaintsAndWishes {
+        private BotState next;
+
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
-                    "Будь ласка введіть вашу скаргу чи побажання: ");
+            context.getBot().sendMessage(context.getClient(),
+                    "Будь ласка введіть вашу скаргу чи побажання, або натиснiть назад:", KeyboardBack.GET_KEYBOARD);
         }
 
         @Override
         public void handleInput(BotContext context) {
-            Clients clients = context.getClients();
-            NotificationService notificationService = context.getTools().getNotificationService();
-
-            //send message to admin with complaints or wishes
-            notificationService.sendComplaintsAndWishesToAdminMail(clients, context.getInput());
+            String nextStep = context.getText();
+            if (nextStep.equals(Buttons.BACK.getValue())) {
+            } else {
+                //send message to admin with complaints or wishes
+                Client client = context.getClient();
+                NotificationService notificationService = context.getTools().getNotificationService();
+                notificationService.sendComplaintsAndWishesToAdminMail(client, context.getText());
+            }
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
         }
 
         @Override
         public BotState nextState() {
-            return MyProfile;
+            return next;
+        }
+    },
+
+    Rules {
+        private BotState next;
+        private boolean inputNeeded = false;
+
+        @Override
+        public boolean isInputNeeded() {
+            return inputNeeded;
+        }
+
+        @Override
+        public void enter(BotContext context) {
+            List<Rule> rules = context.getTools().getRulesService().findAll();
+            if (rules.size() == 0) {
+                context.getBot().sendMessage(context.getClient(), "You don't have an rules");
+            } else {
+                for (Rule rule : rules) {
+                    context.getBot().sendMessage(context.getClient(), rule.getName() + "\n" + rule.getDescription());
+                }
+            }
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+
+    Locations {
+        private BotState next;
+        private boolean inputNeeded = false;
+
+        @Override
+        public boolean isInputNeeded() {
+            return inputNeeded;
+        }
+
+        @Override
+        public void enter(BotContext context) {
+            List<Location> locations = context.getTools().getLocationsService().findAll();
+            if (locations.size() == 0) {
+                context.getBot().sendMessage(context.getClient(), "We don't have any locations right now");
+            } else {
+                for (Location location : locations) {
+                    context.getBot().sendMessage(context.getClient(), "№ " + location.getLocationsId() + "\n" +
+                            "location working hours " + location.getSchedule() + "\n" +
+                            "Store address " + location.getStoreAddress() + "\n" +
+                            "Link to google maps " + location.getLinkToGoogleMaps());
+                }
+            }
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
         }
     },
 
 
+    // ADMIN MANAGEMENT
+
+    Admin_Panel {
+        private BotState next;
+
+        @Override
+        public void enter(BotContext context) {
+            context.getBot().sendMessage(context.getClient(),
+                    "Будь ласка оберіть необхідну операцію з клавіатури операцій:", KeyboardAdminPanel.GET_KEYBOARD);
+        }
+
+        @Override
+        public void handleInput(BotContext context) {
+            String command = context.getText();
+            if (command.equals(Buttons.MY_PROFILE.getValue())) {
+                next = MyProfile;
+            } else if (command.equals(Buttons.MY_CARD.getValue())) {
+                next = MyCard;
+            } else if (command.equals(Buttons.MY_BALANCE.getValue())) {
+                next = MyBalance;
+            } else if (command.equals(Buttons.UPDATE_MY_PROFILE.getValue())) {
+                next = UpdateMyProfile;
+            } else if (command.equals(Buttons.MY_ACTIONS.getValue())) {
+                next = Actions;
+            } else if (command.equals(Buttons.COMPLAINTS_AND_WISHES.getValue())) {
+                next = ComplaintsAndWishes;
+            } else if (command.equals(Buttons.ACTION_ADD.getValue())) {
+                next = ActionAdd;
+            } else if (command.equals(Buttons.MY_ORDERS.getValue())) {
+                next = MyOrders;
+            } else if (command.equals(Buttons.PRODUCT_ADD.getValue())) {
+                next = ProductAdd;
+            } else if (command.equals(Buttons.PRODUCT_DELETE.getValue())) {
+                next = ProductDelete;
+            } else {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            }
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+
+    ActionAdd {
+        private BotState next;
+
+        @Override
+        public void enter(BotContext context) {
+            context.getBot().sendMessage(context.getClient(),
+                    "Будь ласка вставьте картинку i пiдпис до неi' починаючи з iм'я акцii' а далi через  символ '/' опис акциi: ",
+                    KeyboardBack.GET_KEYBOARD);
+        }
+
+        @Override
+        public void handleInput(BotContext context) {
+            String nextStep = context.getText();
+            if (nextStep.equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                List<PhotoSize> photos = context.getPhotoSizeList();
+                String caption = context.getText() != null ? context.getText() : "";
+
+                PhotoSize photo = photos.stream()
+                        .max(Comparator.comparing(PhotoSize::getFileSize))
+                        .orElse(null);
+
+                if (photo != null) {
+                    String pathForActionImage;
+                    try {
+                        pathForActionImage = context.getTools().saveImageAndGetPath(photo.getFileId(), context.getBot(), "actionsImage");
+                        Action action = context.getTools().getActionsService().getActionFromPhotoPathAndDescription(pathForActionImage, caption);
+                        context.getTools().getActionsService().save(action);
+
+                        next = Actions;
+                    } catch (Exception e) {
+                        context.getBot().sendMessage(context.getClient(), e.getMessage());
+                        next = ActionAdd;
+                    }
+                } else {
+                    context.getBot().sendMessage(context.getClient(), "Некоректний ввiд !");
+                    next = ActionAdd;
+                }
+            }
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+    MyOrders {
+        private BotState next;
+        private boolean inputNeeded = false;
+
+        @Override
+        public boolean isInputNeeded() {
+            return inputNeeded;
+        }
+
+        @Override
+        public void enter(BotContext context) {
+            Client client = context.getClient();
+            List<Orders> ordersList = context.getTools().getOrderService().findAllByClient(client);
+            if (ordersList.isEmpty()) {
+                context.getBot().sendMessage(client, "You don't have orders, have a nice day \uD83D\uDE09",
+                        client.getAdmin() ? KeyboardAdminPanel.GET_KEYBOARD : KeyboardChooseAnAction.GET_KEYBOARD);
+            } else {
+                System.out.println(ordersList);
+                StringBuilder sb = new StringBuilder("Your orders:\n");
+                for (Orders order : ordersList) {
+                    sb.append("Order id: ").append(order.getOrderId()).append("\n")
+                            .append("Products: ").append(order.getProducts().toString()).append("\n")
+                            .append("Ready in: ").append(order.getDateTimeToReady()).append("\n")
+                            .append("-------------------------------------\n"); // добавляем разделитель между заказами
+                }
+                context.getBot().sendMessage(client,
+                        sb.toString(),
+                        client.getAdmin() ? KeyboardAdminPanel.GET_KEYBOARD : KeyboardChooseAnAction.GET_KEYBOARD);
+            }
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+
+    ProductAdd {
+        private BotState next;
+
+        @Override
+        public void enter(BotContext context) {
+            Client client = context.getClient();
+            context.getBot().sendMessage(client,
+                    "Будь ласка вставьте картинку i пiдпис до неi' починаючи з iм'я товару' а далi через  символ '/' цiну товару цiлим числом: ",
+                    KeyboardBack.GET_KEYBOARD);
+        }
+
+        @Override
+        public void handleInput(BotContext context) {
+            String nextStep = context.getText();
+            if (nextStep.equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                List<PhotoSize> photos = context.getPhotoSizeList();
+                String caption = context.getText() != null ? context.getText() : "";
+
+                PhotoSize photo = photos.stream()
+                        .max(Comparator.comparing(PhotoSize::getFileSize))
+                        .orElse(null);
+
+                if (photo != null) {
+                    String pathForActionImage;
+                    try {
+                        pathForActionImage = context.getTools().getImbBBService().uploadImageAndGetURL(photo.getFileId(), context.getBot());
+                        String[] splitCaption = caption.split("/");
+
+                        Product product = new Product(splitCaption[0],
+                                Integer.parseInt(splitCaption[1]), pathForActionImage, new Date());
+                        context.getTools().getProductService().save(product);
+
+                        next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+                    } catch (Exception e) {
+                        context.getBot().sendMessage(context.getClient(), e.getMessage());
+                        next = ProductAdd;
+                    }
+                } else {
+                    context.getBot().sendMessage(context.getClient(), "Некоректний ввiд !");
+                    next = ProductAdd;
+                }
+            }
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+
+    ProductDelete {
+        private BotState next;
+
+        @Override
+        public void enter(BotContext context) {
+            Client client = context.getClient();
+            context.getBot().sendMessage(client,
+                    "Будь ласка введiть iм'я товару а далі через  символ '/' цiну товару цiлим числом, який бажаєте ВИДАЛИТИ",
+                    KeyboardBack.GET_KEYBOARD);
+        }
+
+        @Override
+        public void handleInput(BotContext context) {
+            String nextStep = context.getText();
+            if (nextStep.equals(Buttons.BACK.getValue())) {
+                next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+            } else {
+                String[] split = nextStep.split("/");
+                if(split.length == 2){
+                    if(!context.getTools().getProductService().deleteByNameAndPrice(split[0], Integer.parseInt(split[1]))){
+                        context.getBot().sendMessage(context.getClient(), "Введеного товару не iснуэ !");
+                        next = ProductDelete;
+                    }else {
+                        context.getBot().sendMessage(context.getClient(), "Операцiя успiшна !");
+                        next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+                    }
+                }else {
+                    context.getBot().sendMessage(context.getClient(), "Некоректний ввiд !");
+                    next = ProductDelete;
+                }
+            }
+        }
+
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+
     Approved(false) {
         @Override
         public void enter(BotContext context) {
-            context.getBot().sendMessage(context.getClients(),
+            context.getBot().sendMessage(context.getClient(),
                     "Thank you for application!");
         }
 
@@ -409,7 +821,7 @@ public enum BotState {
         }
     };
 
-    // --------------- //
+// --------------- //
 
     private static BotState[] states;
     private final boolean inputNeeded;

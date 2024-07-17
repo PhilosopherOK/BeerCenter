@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Entity
-public class Actions {
+public class Action {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "actions_id")
@@ -22,9 +22,14 @@ public class Actions {
     @Column(name = "path_of_photo")
     private String pathOfPhoto;
 
-    public Actions(String nameOfActions, String shortDescriptions, String pathOfPhoto) {
+    public Action(String nameOfActions, String shortDescriptions, String pathOfPhoto) {
         this.nameOfActions = nameOfActions;
         this.shortDescriptions = shortDescriptions;
         this.pathOfPhoto = pathOfPhoto;
+    }
+
+    @Override
+    public String toString() {
+        return   nameOfActions + '\n' + shortDescriptions;
     }
 }

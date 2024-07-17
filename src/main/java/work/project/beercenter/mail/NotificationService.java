@@ -1,15 +1,16 @@
 package work.project.beercenter.mail;
 
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import work.project.beercenter.model.Clients;
+import work.project.beercenter.model.Client;
 import work.project.beercenter.service.ClientsService;
 
 @Component
+@Data
 @PropertySource("classpath:telegram.properties")
 public class NotificationService {
 
@@ -25,21 +26,17 @@ public class NotificationService {
     @Value("${bot.email.to}")
     private String emailTo;
 
-    public NotificationService(ClientsService clientsService, JavaMailSender emailSender) {
-        this.clientsService = clientsService;
-        this.emailSender = emailSender;
-    }
 
-    public void sendComplaintsAndWishesToAdminMail(Clients clients, String theReasonForPetition) {
+    public void sendComplaintsAndWishesToAdminMail(Client client, String theReasonForPetition) {
         StringBuilder sb = new StringBuilder();
         sb.append("Full name: ")
-                .append(clients.getFullName())
+                .append(client.getFullName())
                 .append("\r\n")
                 .append("Phone: ")
-                .append(clients.getPhone())
+                .append(client.getPhone())
                 .append("\r\n")
                 .append("Email: ")
-                .append(clients.getEmail())
+                .append(client.getEmail())
                 .append("\r\n")
                 .append("wanna to say about: " + "\n")
                 .append(theReasonForPetition)

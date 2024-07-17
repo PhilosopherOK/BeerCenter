@@ -4,10 +4,11 @@ import javax.persistence.*;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Entity
-public class Clients {
+public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -35,24 +36,38 @@ public class Clients {
 
     private Boolean admin;
 
-    @OneToOne(mappedBy = "clients")
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Orders> orders;
+
+    @OneToOne(mappedBy = "client")
     private LoyaltyCard loyaltyCard;
 
     private Integer verificationCode;
 
-    public Clients() {
+    public Client() {
         address = "даннi вiдсутнi";
+        admin = false;
     }
 
-    public Clients(Long chatId, Integer state) {
-        address = "даннi вiдсутнi";
-        this.chatId = chatId;
-    }
-
-    public Clients(Long chatId, Integer stateId, Boolean admin) {
+    public Client(Long chatId, Integer state) {
         address = "даннi вiдсутнi";
         this.chatId = chatId;
-        this.admin = admin;
+        admin = false;
     }
 
+    @Override
+    public String toString() {
+        return "Client{" +
+                "clientId=" + clientId +
+                ", chatId=" + chatId +
+                ", stateId=" + stateId +
+                ", fullName='" + fullName + '\'' +
+                ", phone='" + phone + '\'' +
+                ", email='" + email + '\'' +
+                ", dateOfBirthday=" + dateOfBirthday +
+                ", address='" + address + '\'' +
+                ", admin=" + admin +
+                ", verificationCode=" + verificationCode +
+                '}';
+    }
 }

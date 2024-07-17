@@ -1,52 +1,50 @@
 package work.project.beercenter.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import work.project.beercenter.model.Clients;
+import work.project.beercenter.model.Client;
 import work.project.beercenter.repo.ClientsRepository;
 
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @Service
 public class ClientsService {
 
     private final ClientsRepository clientsRepository;
 
-    public ClientsService(ClientsRepository clientsRepository) {
-        this.clientsRepository = clientsRepository;
-    }
-
     @Transactional(readOnly = true)
-    public Clients findByChatId(long id) {
+    public Client findByChatId(long id) {
         return clientsRepository.findByChatId(id);
     }
 
     @Transactional(readOnly = true)
-    public List<Clients> findAllUsers(Pageable pageable) {
+    public List<Client> findAllUsers(Pageable pageable) {
         return clientsRepository.findAll(pageable).getContent();
     }
+
     @Transactional(readOnly = true)
-    public List<Clients> findAllUsers() {
+    public List<Client> findAllUsers() {
         return clientsRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public Long countUsers(){
+    public Long countUsers() {
         return clientsRepository.count();
     }
 
-
     @Transactional
-    public void addUser(Clients clients) {
-        clients.setAdmin(clientsRepository.count() == 0);
-        clientsRepository.save(clients);
+    public void addUser(Client client) {
+        client.setAdmin(clientsRepository.count() == 0);
+        clientsRepository.save(client);
     }
 
     @Transactional
-    public void updateUser(Clients clients) {
-        clientsRepository.save(clients);
+    public void updateUser(Client client) {
+        clientsRepository.save(client);
     }
 }
 
