@@ -20,12 +20,12 @@ public class OrderController {
     @PostMapping("/addOrder")
     public void addItem(@RequestBody OrderRequestDto orderRequestDto) {
         Client client = tools.getClientsService().findByChatId(orderRequestDto.getChatId());
-        System.out.println("1");
+//        System.out.println("1");
 
         if (client == null) {
             return;
         } else {
-            System.out.println("2");
+
             tools.getOrderService().save(new Orders(client, null,
                     orderRequestDto.getLocalDateTime()), orderRequestDto.getProductsId());
         }
