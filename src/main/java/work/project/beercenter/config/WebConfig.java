@@ -13,10 +13,13 @@ public class WebConfig implements WebMvcConfigurer {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("https://philosopherok.github.io")
+//                        .allowedOrigins("https://philosopherok.github.io")
+//                        .allowedOrigins("http://127.0.0.1:5500/")
+//                        .allowedOrigins("https://2k0st01.github.io/")
+                        .allowedOrigins("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .allowedHeaders("*");
+//                        .allowCredentials(true);
             }
         };
     }

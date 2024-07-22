@@ -3,6 +3,7 @@ package work.project.beercenter.model;
 import javax.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class Client {
     private Boolean admin;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Orders> orders;
+    private List<Orders> orders = new ArrayList<>();
 
     @OneToOne(mappedBy = "client")
     private LoyaltyCard loyaltyCard;

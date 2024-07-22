@@ -5,14 +5,17 @@ import javax.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @NoArgsConstructor
 @Entity
-public class Product {
+public class Product implements Serializable {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_generator")
+    @SequenceGenerator(name="product_generator", sequenceName = "product_seq", allocationSize=1)
     @Column(name = "product_id")
     private Long productId;
 

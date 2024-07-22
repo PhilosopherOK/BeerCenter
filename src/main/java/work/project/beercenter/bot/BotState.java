@@ -3,9 +3,11 @@ package work.project.beercenter.bot;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import work.project.beercenter.mail.NotificationService;
 import work.project.beercenter.model.*;
+import work.project.beercenter.service.ProductService;
 import work.project.beercenter.utils.keyboards.*;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 
 import java.util.Comparator;
@@ -690,6 +692,7 @@ public enum BotState {
         @Override
         public void enter(BotContext context) {
             Client client = context.getClient();
+
             List<Orders> ordersList = context.getTools().getOrderService().findAllByClient(client);
             if (ordersList.isEmpty()) {
                 context.getBot().sendMessage(client, "You don't have orders, have a nice day \uD83D\uDE09",
@@ -697,12 +700,16 @@ public enum BotState {
             } else {
                 System.out.println(ordersList);
                 StringBuilder sb = new StringBuilder("Your orders:\n");
+                BigDecimal sum = new BigDecimal(0);
                 for (Orders order : ordersList) {
+                    Product product = context.getTools().getProductService().findById(Long.valueOf(order.getProductId()));
+                    sum = sum.add(BigDecimal.valueOf(product.getPrice()).multiply(BigDecimal.valueOf(order.getPice())));
                     sb.append("Order id: ").append(order.getOrderId()).append("\n")
-                            .append("Products: ").append(order.getProducts().toString()).append("\n")
+                            .append("Products: ").append(product.getName()).append("\n")
                             .append("Ready in: ").append(order.getDateTimeToReady()).append("\n")
                             .append("-------------------------------------\n"); // добавляем разделитель между заказами
                 }
+                sb.append("TOTAL PRICE: ").append(sum.toString()).append(" UAH");
                 context.getBot().sendMessage(client,
                         sb.toString(),
                         client.getAdmin() ? KeyboardAdminPanel.GET_KEYBOARD : KeyboardChooseAnAction.GET_KEYBOARD);

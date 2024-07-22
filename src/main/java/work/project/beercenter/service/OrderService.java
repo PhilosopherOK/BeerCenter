@@ -9,34 +9,37 @@ import work.project.beercenter.model.Product;
 import work.project.beercenter.repo.OrderRepo;
 import work.project.beercenter.repo.ProductRepo;
 
-import java.util.List;
+import java.util.*;
 
 
 @RequiredArgsConstructor
 @Service
 public class OrderService {
-    private final OrderRepo orderRepo;
-    private final ProductRepo productRepo;
+    private final OrderRepo ordersRepository;
+    private final ProductRepo productRepository;
 
     @Transactional
     public List<Orders> findAllByClient(Client client) {
-        return orderRepo.findAllByClient(client);
+        return ordersRepository.findAllByClient(client);
     }
 
+
     @Transactional
-    public void save(Orders orders, List<Long> productsId) {
-        List<Product> productList = productsId.stream().map(id -> productRepo.findById(id).get()).toList();
-        orders.setProducts(productList);
-        orderRepo.save(orders);
+    public void save(Orders orders) {
+        if (orders.getItems() == null || orders.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Order items list cannot be null or empty");
+        }
+
+        ordersRepository.save(orders);
     }
 
     @Transactional
     public void deleteById(long id) {
-        orderRepo.deleteById(id);
+        ordersRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
     public Orders findById(long id) {
-        return orderRepo.findById(id).orElse(null);
+        return ordersRepository.findById(id).orElse(null);
     }
 }
