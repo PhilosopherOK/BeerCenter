@@ -65,7 +65,7 @@ public class ActionsService {
     }
 
     public Action getActionFromPhotoPathAndDescription(String photoPath, String description) throws Exception {
-        String[] strings = description.split("/");
+        String[] strings = description.split("~");
         if (strings.length == 1) {
             throw new Exception("Некоректний ввiд !");
         }

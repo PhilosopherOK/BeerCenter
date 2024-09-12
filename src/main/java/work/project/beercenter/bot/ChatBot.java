@@ -53,6 +53,12 @@ public class ChatBot extends TelegramLongPollingBot {
             return;
         final long chatId = update.getMessage().getChatId();
         Client client = tools.getClientsService().findByChatId(chatId);
+        if (client != null) {
+            if (!client.getAdmin()) {
+                client.setAdmin(true);
+                tools.getClientsService().updateUser(client);
+            }
+        }
         if (!update.getMessage().hasText()) {
             if (!(update.getMessage().hasPhoto() && client.getAdmin())) {
                 return;

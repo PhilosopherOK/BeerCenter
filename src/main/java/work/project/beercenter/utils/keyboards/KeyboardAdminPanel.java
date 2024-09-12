@@ -14,10 +14,14 @@ public enum KeyboardAdminPanel implements StandardKeyboard{
                 Buttons.UPDATE_MY_PROFILE.getValue(),
                 Buttons.MY_ACTIONS.getValue(),
                 Buttons.COMPLAINTS_AND_WISHES.getValue(),
-                Buttons.ACTION_ADD.getValue(),
+                Buttons.LOCATIONS.getValue(),
                 Buttons.MY_ORDERS.getValue(),
+                Buttons.LOCATIONS_ADD.getValue(),
+                Buttons.LOCATIONS_DELETE.getValue(),
+                Buttons.ACTION_ADD.getValue(),
                 Buttons.PRODUCT_ADD.getValue(),
-                Buttons.PRODUCT_DELETE.getValue()
+                Buttons.PRODUCT_DELETE.getValue(),
+                Buttons.MESSAGE_FOR_CLIENTS.getValue()
                 );
         replyKeyboardMarkup = getKeyboard();
     }

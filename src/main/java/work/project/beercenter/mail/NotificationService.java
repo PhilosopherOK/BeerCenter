@@ -29,16 +29,16 @@ public class NotificationService {
 
     public void sendComplaintsAndWishesToAdminMail(Client client, String theReasonForPetition) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Full name: ")
+        sb.append("Повне ім'я: ")
                 .append(client.getFullName())
                 .append("\r\n")
-                .append("Phone: ")
+                .append("Телефон: ")
                 .append(client.getPhone())
                 .append("\r\n")
                 .append("Email: ")
                 .append(client.getEmail())
                 .append("\r\n")
-                .append("wanna to say about: " + "\n")
+                .append("Пише про: " + "\n")
                 .append(theReasonForPetition)
                 .append("\r\n\r\n");
 
