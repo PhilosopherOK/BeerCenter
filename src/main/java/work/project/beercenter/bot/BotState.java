@@ -123,33 +123,33 @@ public enum BotState {
         }
     },
 
-//    CheckForNumberValid {
-//        private BotState next;
-//
-//        @Override
-//        public void enter(BotContext context) {
-//            context.getBot().sendMessage(context.getClient(),
-//                    "Будь ласка введіть код з смс:");
-//        }
-//
-//        @Override
-//        public void handleInput(BotContext context) {
-//            if (context.getTools().getPhoneValidator().numberIsValid(context.getClient(), context.getText())) {
-//                context.getBot().sendMessage(context.getClient(), "номер підтвердженно");
-//                next = EnterEmail;
-//            } else {
-//                context.getBot().sendMessage(context.getClient(), "номер не підтвердженно");
-//                next = EnterPhone;
-//                context.getClient().setPhone("данні відсутні");
-//
-//            }
-//        }
-//
-//        @Override
-//        public BotState nextState() {
-//            return next;
-//        }
-//    },
+    CheckForNumberValid {
+        private BotState next;
+
+        @Override
+        public void enter(BotContext context) {
+            context.getBot().sendMessage(context.getClient(),
+                    "Будь ласка введіть код з смс:");
+        }
+
+        @Override
+        public void handleInput(BotContext context) {
+            if (context.getTools().getPhoneValidator().numberIsValid(context.getClient(), context.getText())) {
+                context.getBot().sendMessage(context.getClient(), "номер підтвердженно");
+                next = EnterEmail;
+            } else {
+                context.getBot().sendMessage(context.getClient(), "номер не підтвердженно");
+                next = EnterPhone;
+                context.getClient().setPhone("данні відсутні");
+
+            }
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
 
     EnterEmail {
         private BotState next;
@@ -493,33 +493,33 @@ public enum BotState {
         }
     },
 
-//    Rules {
-//        private BotState next;
-//        private boolean inputNeeded = false;
-//
-//        @Override
-//        public boolean isInputNeeded() {
-//            return inputNeeded;
-//        }
-//
-//        @Override
-//        public void enter(BotContext context) {
-//            List<Rule> rules = context.getTools().getRulesService().findAll();
-//            if (rules.size() == 0) {
-//                context.getBot().sendMessage(context.getClient(), "You don't have an rules");
-//            } else {
-//                for (Rule rule : rules) {
-//                    context.getBot().sendMessage(context.getClient(), rule.getName() + "\n" + rule.getDescription());
-//                }
-//            }
-//            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
-//        }
-//
-//        @Override
-//        public BotState nextState() {
-//            return next;
-//        }
-//    },
+    Rules {
+        private BotState next;
+        private boolean inputNeeded = false;
+
+        @Override
+        public boolean isInputNeeded() {
+            return inputNeeded;
+        }
+
+        @Override
+        public void enter(BotContext context) {
+            List<Rule> rules = context.getTools().getRulesService().findAll();
+            if (rules.size() == 0) {
+                context.getBot().sendMessage(context.getClient(), "You don't have an rules");
+            } else {
+                for (Rule rule : rules) {
+                    context.getBot().sendMessage(context.getClient(), rule.getName() + "\n" + rule.getDescription());
+                }
+            }
+            next = context.getClient().getAdmin() ? Admin_Panel : ChooseAnAction;
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
 
     Locations {
         private BotState next;
