@@ -16,7 +16,6 @@ public class AppConfig {
     @Bean
     public CommandLineRunner demo(OrderRepo orderRepo) {
         return args -> {
-            orderRepo.deleteAll();
 
 //            productService.save(new Product("firstProd", 25,
 //                    "https://img.freepik.com/free-photo/view-3d-adorable-cat-with-fluffy-clouds_23-2151113419.jpg?t=st=1721143620~exp=1721147220~hmac=7cdf389acb92df85e83e26413c6d5b508d082dddaa31119d8c098c62817f1838&w=360"

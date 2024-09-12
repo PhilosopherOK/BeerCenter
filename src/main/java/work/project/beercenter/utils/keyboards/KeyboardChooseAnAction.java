@@ -16,8 +16,7 @@ public enum KeyboardChooseAnAction implements StandardKeyboard{
                 Buttons.MY_ACTIONS.getValue(),
                 Buttons.COMPLAINTS_AND_WISHES.getValue(),
                 Buttons.LOCATIONS.getValue(),
-                Buttons.MY_ORDERS.getValue(),
-                Buttons.PRODUCT_ADD.getValue());
+                Buttons.MY_ORDERS.getValue());
         replyKeyboardMarkup = getKeyboard();
     }
 

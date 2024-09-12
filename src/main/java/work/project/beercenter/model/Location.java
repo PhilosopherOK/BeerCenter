@@ -23,14 +23,9 @@ public class Location {
 
     private String schedule;
 
-//    @Temporal(value = TemporalType.DATE)
-//    @Column(name = "opening_date")
-//    private Date openingDate;
-//
-//    private Boolean active;
-
-    public Location(String storeAddress, String schedule) {
+    public Location(String storeAddress, String linkToGoogleMaps, String schedule) {
         this.storeAddress = storeAddress;
+        this.linkToGoogleMaps = linkToGoogleMaps;
         this.schedule = schedule;
     }
 }

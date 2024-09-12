@@ -22,17 +22,17 @@ public class ClientsService {
     }
 
     @Transactional(readOnly = true)
-    public List<Client> findAllUsers(Pageable pageable) {
+    public List<Client> findAll(Pageable pageable) {
         return clientsRepository.findAll(pageable).getContent();
     }
 
     @Transactional(readOnly = true)
-    public List<Client> findAllUsers() {
+    public List<Client> findAll() {
         return clientsRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public Long countUsers() {
+    public Long count() {
         return clientsRepository.count();
     }
 
